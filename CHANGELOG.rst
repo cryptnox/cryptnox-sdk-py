@@ -5,11 +5,18 @@ Changelog
 Version 1.0.5 - 2026-07-14
 ------------------------------------------------------------------------------------------------
 
+Security
+^^^^^^^^
+
+- Folded a per-session anti-replay counter into the secure channel MAC in both directions (gated on applet version >= 2.0.0). A replayed wrapped command now carries a stale counter and is rejected by the card before decryption. The counter is never transmitted, so there is no wire-format change
+- Verified the card's mutual-authentication proof, ``SHA-256(Kenc || challenge)``, at channel open (gated on applet version >= 2.0.0; applet 1.6.x replies with raw random and is skipped)
+
 Added
 ^^^^^^^
 
 - Added Ed25519 (EdDSA) signing support for applet v2.0 (``KeyType.ED25519``)
 - Added ``examples/solana_transaction/`` demonstrating Solana signing and transaction building
+- Added auto-generated PDF documentation (pdflatex), with the cover logo generated from SVG at build time
 
 Changed
 ^^^^^^^
@@ -17,11 +24,21 @@ Changed
 - Renamed ``BasicG1`` card class to ``Basic`` (``BasicG1`` kept as a backwards-compatible alias)
 - Padded the SIGN PIN to the spec's fixed 9-byte field and replaced SIGN magic numbers with named constants
 - Replaced hardcoded PINs in examples with a named PIN variable
+- Set the initial secure channel encryption IV to the first 16 bytes of ``Kenc`` to match the card
+- Gated ``sign_public`` on the applet version and dropped EOS support
 
 Fixed
 ^^^^^^^
 
-- Guarded Ed25519 key handling against silently falling through to the ECDSA path (unknown key types now raise)
+- Guarded Ed25519 key handling against silently falling through to the ECDSA path — key types are normalized and allowlisted, and an unknown type now raises instead of being signed with ECDSA
+
+CI
+^^^
+
+- Raise on missing ``cairosvg``/``Pillow`` in the docs build instead of silently passing
+- Don't fail the Semgrep workflow when SARIF upload is unavailable
+- Guarded the docs deploy and pinned GitHub Actions to commit SHAs
+- Fixed the ``nosemgrep`` suppression for AES-CBC crypto findings
 
 Version 1.0.4 - 2026-04-10
 ------------------------------------------------------------------------------------------------
